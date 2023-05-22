@@ -24,6 +24,20 @@ import { Comment } from 'src/app/core/models/comment.model';
       ]),
       transition('active => default', [
         animate('500ms ease-in-out')
+      ]),
+      // animation depuis le vide
+      // On peut avoir deux valeur pour la transition d'entre: ':enter' et 'void => *'
+      transition(':enter', [
+        style({
+          transform: 'translateX(-100%)',
+          opacity: 0,
+          'background-color': 'rgb(201, 157, 242)',
+        }),
+        animate('250ms ease-out', style({
+          transform: 'translateX(0)',
+          opacity: 1,
+          'background-color': 'white',
+        }))
       ])
     ])
   ]
