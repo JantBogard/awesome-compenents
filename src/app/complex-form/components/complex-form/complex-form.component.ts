@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Observable, map, startWith, tap } from 'rxjs';
 
 @Component({
   selector: 'app-complex-form',
@@ -19,15 +20,25 @@ export class ComplexFormComponent implements OnInit {
   public confirmPasswordCtrl!: FormControl;
   public loginInfoForm!: FormGroup;
 
+  public showEmailCtrl$!: Observable<boolean>;
+  public showPhoneCtrl$!: Observable<boolean>;
+
   constructor(private formBuilder: FormBuilder) { }
 
   ngOnInit(): void {
     this.initFormControls();
     this.initMainFrom();
+    this.initFormObservables();
   }
 
   private initMainFrom(): void {
-    this.mainForm = this.formBuilder.group({});
+    this.mainForm = this.formBuilder.group({
+      personnalInfo: this.personnalInfoForm,
+      contactPreference: this.contactPreferenceCtrl,
+      email: this.emailForm,
+      phone: this.phoneCtrl,
+      loginInfo: this.loginInfoForm
+    });
   }
 
   private initFormControls(): void {
@@ -52,7 +63,42 @@ export class ComplexFormComponent implements OnInit {
     })
   }
 
+  private initFormObservables() {
+    this.showEmailCtrl$ = this.contactPreferenceCtrl.valueChanges.pipe(
+      startWith(this.contactPreferenceCtrl.value),
+      map(preference => preference === 'email'),
+      tap(showEmailCtrl => this.setEmailValidators(showEmailCtrl))
+    );
+
+    this.showPhoneCtrl$ = this.contactPreferenceCtrl.valueChanges.pipe(
+      startWith(this.contactPreferenceCtrl.value),
+      map(preference => preference === 'phone'),
+      tap(showPhoneCtrl => this.setPhoneValidators(showPhoneCtrl))
+    );
+  }
+
+  private setEmailValidators(showEmailCtrl: boolean) {
+    if (showEmailCtrl) {
+      this.emailCtrl.addValidators([Validators.required, Validators.email]);
+      this.confirmEmailCtrl.addValidators([Validators.required, Validators.email]);
+    } else {
+      this.emailCtrl.clearValidators();
+      this.confirmEmailCtrl.clearValidators();
+    }
+    this.emailCtrl.updateValueAndValidity();
+    this.confirmEmailCtrl.updateValueAndValidity();
+  }
+
+  private setPhoneValidators(showPhoneCtrl: boolean) {
+    if (showPhoneCtrl) {
+      this.phoneCtrl.addValidators([Validators.required, Validators.minLength(10), Validators.maxLength(10)])
+    } else {
+      this.phoneCtrl.clearValidators();
+    }
+    this.phoneCtrl.updateValueAndValidity();
+  }
+
   onSubmitForm(): void {
-    throw new Error('Method not implemented.');
+    console.log(this.mainForm.value);
   }
 }
