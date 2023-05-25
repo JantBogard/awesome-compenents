@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Observable, map, startWith, tap } from 'rxjs';
+import { ComplexFormService } from '../../services/complex-form.service';
 
 @Component({
   selector: 'app-complex-form',
@@ -8,6 +9,8 @@ import { Observable, map, startWith, tap } from 'rxjs';
   styleUrls: ['./complex-form.component.scss']
 })
 export class ComplexFormComponent implements OnInit {
+
+  loading = false;
 
   public mainForm!: FormGroup;
   public personnalInfoForm!: FormGroup;
@@ -23,7 +26,8 @@ export class ComplexFormComponent implements OnInit {
   public showEmailCtrl$!: Observable<boolean>;
   public showPhoneCtrl$!: Observable<boolean>;
 
-  constructor(private formBuilder: FormBuilder) { }
+  constructor(private formBuilder: FormBuilder,
+    private complexFormService: ComplexFormService) { }
 
   ngOnInit(): void {
     this.initFormControls();
@@ -98,7 +102,36 @@ export class ComplexFormComponent implements OnInit {
     this.phoneCtrl.updateValueAndValidity();
   }
 
+  private resetForm(): void {
+    this.mainForm.reset();
+    this.contactPreferenceCtrl.patchValue('email');
+  }
+
   onSubmitForm(): void {
-    console.log(this.mainForm.value);
+    this.loading = true;
+    this.complexFormService.saveUserInfo(this.mainForm.value).pipe(
+      tap(saved => {
+        this.loading = false;
+        if (saved) {
+          this.resetForm();
+        } else {
+          console.error('Echec de l\'enregistrement');
+        }
+      })
+    ).subscribe();
+  }
+
+  getFormControlErrorText(ctrl: AbstractControl): string {
+    if (ctrl.hasError('required')) {
+      return 'Ce champs est requis';
+    } else if (ctrl.hasError('email')) {
+      return 'Merci d\'entrer une adresse mail valide';
+    } else if (ctrl.hasError('minlength')) {
+      return 'Ce numéro de téléphone ne contient pas assez de chiffres';
+    } else if (ctrl.hasError('maxlength')) {
+      return 'Ce numéro de téléphone contient trop de chiffres';
+    } else {
+      return 'Ce champs contient une erreur';
+    }
   }
 }
