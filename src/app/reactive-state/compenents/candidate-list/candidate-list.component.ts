@@ -53,12 +53,15 @@ export class CandidateListComponent implements OnInit {
     const searchType$: Observable<CandidateSearchType> = this.searchTypeCtrl.valueChanges.pipe(
       startWith(this.searchTypeCtrl.value)
     )
+    // trop cool cette function de rechercher
     this.candidates$ = combineLatest([
       search$,
       searchType$,
       this.candidatesService.candidates$
     ]).pipe(
-      map(([search, searchType, candidates]) => candidates.filter(candidate => candidate[searchType].toLowerCase().includes(search)))
+      map(([search, searchType, candidates]) => candidates.filter(candidate => candidate[searchType]
+        .toLowerCase()
+        .includes(search)))
     );
   }
 
